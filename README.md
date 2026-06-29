@@ -1,11 +1,8 @@
 # 
-# Cotiviti Intern Assessment — Aishwarya Balaraju
-
-**Topic 2: Clinical Decision Making and Pattern Recognition in Health Care**
+**Clinical Decision Making and Pattern Recognition in Health Care**
 **Agentic Generative AI for Treatment, Payment, and Operations (TPO)**
 
-This repository contains all four required deliverables for the Cotiviti
-Intern performance assessment, built around a single proposed system: the
+This repository contains all four required deliverables, built around a single proposed system: the
 **Cotiviti Agentic Audit Copilot** — a two-node, human-in-the-loop (HITL)
 pipeline for payment-integrity claims review.
 
@@ -14,14 +11,11 @@ pipeline for payment-integrity claims review.
 | File | Deliverable | Description |
 |---|---|---|
 | `Report.docx` | Written Report | 2-page report + bibliography (MLA), defining the topic, trends, opportunities/threats, and strategic options for Cotiviti |
-| `Presentation.pptx` | Slide Presentation | 7-slide deck summarizing the report and the POC architecture |
-| `Claims_Anomaly_Detector.ipynb` | Hackathon POC — Node 1 | Statistical trigger engine (Python/pandas): rolling z-score anomaly detection over synthetic claims data |
-| `Agentic_Claims_Investigator.ipynb` | Hackathon POC — Node 2 | Generative AI reasoning layer: a real, multi-step Claude API chain that investigates each flagged claim and produces an auditable recommendation |
+| `Presentation.pptx` | Slide Presentation | summarizing the report and the POC architecture |
+| `Claims_Anomaly_Detector.ipynb` | POC — Node 1 | Statistical trigger engine (Python/pandas): rolling z-score anomaly detection over synthetic claims data |
+| `Agentic_Claims_Investigator.ipynb` | POC — Node 2 | Generative AI reasoning layer: a real, multi-step Claude API chain that investigates each flagged claim and produces an auditable recommendation |
 | `Claims_Anomaly_Detector_POC.html` | Hackathon POC — interactive demo | Standalone browser demo of Node 1, no installation required |
 | `requirements.txt` | — | Python dependencies for both notebooks |
-
-A recorded video walkthrough (PowerPoint narration + POC screen-share) is
-included separately per the submission instructions.
 
 ## Architecture: how the two notebooks fit together
 
