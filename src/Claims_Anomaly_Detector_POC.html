@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Node 1: Claims Anomaly Trigger Engine — Cotiviti Agentic Audit Copilot</title>
+<style>
+  :root {
+    --navy: #15233D;
+    --slate: #3A4F66;
+    --paper: #F7F8FA;
+    --line: #DDE3EA;
+    --ink: #1B2430;
+    --muted: #6B7686;
+    --flag: #D6483F;
+    --flag-bg: #FBEAE8;
+    --clean: #2BA87B;
+    --clean-bg: #E7F6EF;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .mono { font-family: "IBM Plex Mono", "SF Mono", Consolas, Menlo, monospace; }
+
+  .app { max-width: 1080px; margin: 0 auto; padding: 28px 28px 48px; }
+
+  .masthead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 2px solid var(--navy);
+    padding-bottom: 14px; margin-bottom: 22px;
+  }
+  .masthead h1 {
+    font-size: 19px; letter-spacing: 0.02em; margin: 0;
+    color: var(--navy); font-weight: 700;
+  }
+  .masthead .tag {
+    font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .masthead .badge {
+    font-size: 10.5px; color: var(--navy); background: #E7ECF4; border: 1px solid #C9D4E5;
+    padding: 3px 9px; border-radius: 3px; letter-spacing: 0.04em;
+  }
+
+  .controls {
+    display: flex; gap: 22px; align-items: end; flex-wrap: wrap;
+    background: #fff; border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px 18px; margin-bottom: 22px;
+  }
+  .ctrl label {
+    display: block; font-size: 10.5px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 6px; font-weight: 600;
+  }
+  select, input[type=range] { accent-color: var(--navy); }
+  select {
+    font: inherit; font-size: 13.5px; padding: 7px 10px; border-radius: 5px;
+    border: 1px solid #C9D2DC; background: #fff; color: var(--ink); min-width: 190px;
+  }
+  .ctrl.slider { min-width: 220px; }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input { flex: 1; }
+  .slider-row .val { font-size: 13px; font-weight: 700; color: var(--navy); width: 32px; text-align: right; }
+  .spacer { flex: 1; }
+  .runbtn {
+    background: var(--navy); color: #fff; border: none; padding: 10px 18px;
+    border-radius: 6px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+    letter-spacing: 0.01em;
+  }
+  .runbtn:hover { background: #1c3052; }
+
+  .summary {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px;
+  }
+  .stat {
+    background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px;
+  }
+  .stat .num { font-size: 26px; font-weight: 700; color: var(--navy); font-family: "IBM Plex Mono", Consolas, Menlo, monospace; }
+  .stat .num.flagged { color: var(--flag); }
+  .stat .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+  .panel {
+    background: #fff; border: 1px solid var(--line); border-radius: 8px;
+    padding: 18px 20px 8px; margin-bottom: 22px;
+  }
+  .panel h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--slate); margin: 0 0 4px;
+  }
+  .panel .sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .gridline { stroke: #EAEDF1; stroke-width: 1; }
+  .baseline-band { fill: var(--clean); opacity: 0.07; }
+  .baseline-line { stroke: var(--clean); stroke-width: 1.4; stroke-dasharray: 4 3; fill: none; opacity: 0.9; }
+  .series-line { stroke: var(--slate); stroke-width: 1.6; fill: none; }
+  .dot-clean { fill: var(--clean); stroke: #fff; stroke-width: 1.5; }
+  .dot-flag { fill: var(--flag); stroke: #fff; stroke-width: 1.8; }
+  .axis-label { fill: var(--muted); font-size: 10.5px; font-family: "IBM Plex Mono", monospace; }
+  .reason-tag {
+    fill: var(--flag); font-size: 10px; font-family: "IBM Plex Mono", monospace; font-weight: 600;
+  }
+  .reason-bg { fill: #fff; stroke: var(--flag); stroke-width: 1; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); font-weight: 600;
+  }
+  td { padding: 9px 10px; border-bottom: 1px solid #EEF1F4; font-family: "IBM Plex Mono", Consolas, Menlo, monospace; font-size: 12.5px; }
+  tr.flagged td { background: var(--flag-bg); }
+  .status-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10.5px; font-weight: 700;
+    font-family: -apple-system, sans-serif; letter-spacing: 0.02em;
+  }
+  .status-pill.flag { background: var(--flag-bg); color: var(--flag); }
+  .status-pill.clean { background: var(--clean-bg); color: var(--clean); }
+
+  .footer-note { font-size: 11.5px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .empty-table { padding: 22px; text-align: center; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="masthead">
+    <div>
+      <h1>NODE 1 · CLAIMS ANOMALY TRIGGER ENGINE</h1>
+      <div class="tag">Cotiviti Agentic Audit Copilot · statistical trigger layer</div>
+    </div>
+    <div class="badge">DEMO · SYNTHETIC DATA</div>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl">
+      <label>Provider</label>
+      <select id="providerSelect"></select>
+    </div>
+    <div class="ctrl slider">
+      <label>Sensitivity (z-score threshold)</label>
+      <div class="slider-row">
+        <input type="range" id="zSlider" min="1.0" max="3.5" step="0.1" value="2.0" />
+        <span class="val mono" id="zVal">2.0</span>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="runbtn" id="runBtn">Run Detection</button>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="panel">
+    <h2>Billed amount over time</h2>
+    <div class="sub" id="chartSub">Dashed band = rolling mean ± threshold · red points = flagged claims</div>
+    <svg id="chart" viewBox="0 0 980 320"></svg>
+  </div>
+
+  <div class="panel">
+    <h2>Flagged claims — reason codes</h2>
+    <div class="sub">Each flag shows the deviation that triggered it — this is the payload Node 2 (the Agentic Claims Investigator) receives for evidence-backed investigation</div>
+    <div id="tableWrap"></div>
+  </div>
+
+  <div class="footer-note">
+    Method: for each provider's claim sequence, a rolling mean and standard deviation are computed over a trailing window.
+    Any claim whose billed amount deviates from that rolling mean by more than the selected z-score threshold is flagged,
+    with the reason code reporting the exact deviation. This is Node 1 of the Cotiviti Agentic Audit Copilot — it decides
+    <em>which</em> claims are statistically worth investigating. Flagged claims are designed to hand off to Node 2, a
+    generative-AI reasoning layer that investigates <em>why</em> and produces an auditable recommendation for a human
+    analyst. Illustrative only, not a production fraud model.
+  </div>
+
+</div>
+
+<script>
+(function () {
+  // ---------- synthetic data generation ----------
+  function seededRandom(seed) {
+    let s = seed;
+    return function () {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+  }
+
+  const providers = [
+    { id: "PRV-1042", name: "PRV-1042 · Family Medicine Group", base: 180, noise: 22, n: 36, anomalies: [11, 24] },
+    { id: "PRV-2207", name: "PRV-2207 · Outpatient Imaging Center", base: 420, noise: 35, n: 36, anomalies: [6, 18, 30] },
+    { id: "PRV-3358", name: "PRV-3358 · Physical Therapy Clinic", base: 95, noise: 14, n: 36, anomalies: [22] },
+    { id: "PRV-4471", name: "PRV-4471 · Specialty Infusion Center", base: 1250, noise: 110, n: 36, anomalies: [3, 15, 16, 27] },
+  ];
+
+  function generateSeries(p) {
+    const rnd = seededRandom(p.base * 7 + p.n);
+    const points = [];
+    for (let i = 0; i < p.n; i++) {
+      let amount = p.base + (rnd() - 0.5) * 2 * p.noise;
+      if (p.anomalies.includes(i)) {
+        const direction = rnd() > 0.4 ? 1 : -1;
+        amount += direction * (p.noise * (3.2 + rnd() * 2.2));
+      }
+      amount = Math.max(amount, p.base * 0.15);
+      points.push({ day: i + 1, amount: Math.round(amount) });
+    }
+    return points;
+  }
+
+  // ---------- anomaly detection ----------
+  function detectAnomalies(points, zThreshold, windowSize) {
+    const result = [];
+    for (let i = 0; i < points.length; i++) {
+      const start = Math.max(0, i - windowSize);
+      const window = points.slice(start, i); // trailing window, excludes current point
+      let mean = null, std = null, z = null, flagged = false;
+      if (window.length >= 4) {
+        mean = window.reduce((a, b) => a + b.amount, 0) / window.length;
+        const variance = window.reduce((a, b) => a + Math.pow(b.amount - mean, 2), 0) / window.length;
+        std = Math.sqrt(variance) || 1;
+        z = (points[i].amount - mean) / std;
+        flagged = Math.abs(z) >= zThreshold;
+      }
+      result.push({ ...points[i], mean, std, z, flagged });
+    }
+    return result;
+  }
+
+  // ---------- chart rendering ----------
+  function renderChart(svg, data) {
+    const W = 980, H = 320, padL = 50, padR = 20, padT = 20, padB = 36;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+
+    const amounts = data.map(d => d.amount);
+    const yMin = Math.min(...amounts) * 0.88;
+    const yMax = Math.max(...amounts) * 1.12;
+
+    const x = i => padL + (i / (data.length - 1)) * plotW;
+    const y = v => padT + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
+
+    let svgContent = "";
+
+    // gridlines + y labels
+    const ySteps = 5;
+    for (let s = 0; s <= ySteps; s++) {
+      const v = yMin + (s / ySteps) * (yMax - yMin);
+      const yy = y(v);
+      svgContent += `<line class="gridline" x1="${padL}" x2="${W - padR}" y1="${yy}" y2="${yy}" />`;
+      svgContent += `<text class="axis-label" x="${padL - 8}" y="${yy + 3}" text-anchor="end">$${Math.round(v)}</text>`;
+    }
+
+    // x labels (every 5th day)
+    data.forEach((d, i) => {
+      if (i % 5 === 0 || i === data.length - 1) {
+        svgContent += `<text class="axis-label" x="${x(i)}" y="${H - 10}" text-anchor="middle">Day ${d.day}</text>`;
+      }
+    });
+
+    // baseline band (mean ± std) — build path from points that have mean/std
+    const withStats = data.map((d, i) => ({ ...d, i })).filter(d => d.mean !== null);
+    if (withStats.length > 1) {
+      const upperPts = withStats.map(d => `${x(d.i)},${y(d.mean + d.std)}`).join(" L ");
+      const lowerPts = withStats.slice().reverse().map(d => `${x(d.i)},${y(d.mean - d.std)}`).join(" L ");
+      svgContent += `<path class="baseline-band" d="M ${upperPts} L ${lowerPts} Z" />`;
+      svgContent += `<path class="baseline-line" d="M ${withStats.map(d => `${x(d.i)},${y(d.mean)}`).join(" L ")}" />`;
+    }
+
+    // main series line
+    svgContent += `<path class="series-line" d="M ${data.map((d, i) => `${x(i)},${y(d.amount)}`).join(" L ")}" />`;
+
+    // points
+    data.forEach((d, i) => {
+      const cls = d.flagged ? "dot-flag" : "dot-clean";
+      const r = d.flagged ? 5.5 : 3.2;
+      svgContent += `<circle class="${cls}" cx="${x(i)}" cy="${y(d.amount)}" r="${r}" />`;
+    });
+
+    // reason tags for flagged points (offset to avoid overlap, alternate above/below)
+    let tagToggle = 0;
+    data.forEach((d, i) => {
+      if (d.flagged) {
+        const label = `z=${d.z.toFixed(1)}`;
+        const above = tagToggle % 2 === 0;
+        tagToggle++;
+        const ty = above ? y(d.amount) - 14 : y(d.amount) + 20;
+        const tw = label.length * 6.2 + 10;
+        svgContent += `<rect class="reason-bg" x="${x(i) - tw/2}" y="${ty - 11}" width="${tw}" height="16" rx="3" />`;
+        svgContent += `<text class="reason-tag" x="${x(i)}" y="${ty}" text-anchor="middle">${label}</text>`;
+      }
+    });
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = svgContent;
+  }
+
+  // ---------- table rendering ----------
+  function renderTable(wrap, data, provider) {
+    const flagged = data.filter(d => d.flagged);
+    if (flagged.length === 0) {
+      wrap.innerHTML = `<div class="empty-table">No claims crossed the current sensitivity threshold for ${provider.name}.</div>`;
+      return;
+    }
+    let rows = flagged.map(d => {
+      const dir = d.z > 0 ? "above" : "below";
+      const reason = `${Math.abs(d.z).toFixed(1)}\u03C3 ${dir} the trailing mean ($${Math.round(d.mean)})`;
+      return `<tr class="flagged">
+        <td>Day ${d.day}</td>
+        <td>$${d.amount.toLocaleString()}</td>
+        <td>$${Math.round(d.mean).toLocaleString()}</td>
+        <td>${d.z.toFixed(2)}</td>
+        <td class="mono" style="font-size:12px;">${reason}</td>
+        <td><span class="status-pill flag">FLAGGED</span></td>
+      </tr>`;
+    }).join("");
+    wrap.innerHTML = `<table>
+      <thead><tr>
+        <th>Claim Day</th><th>Billed Amount</th><th>Rolling Mean</th><th>Z-Score</th><th>Reason Code</th><th>Status</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
+
+  function renderSummary(el, data, zThreshold) {
+    const flagged = data.filter(d => d.flagged);
+    const rate = ((flagged.length / data.length) * 100).toFixed(1);
+    const maxZ = data.reduce((m, d) => d.z !== null && Math.abs(d.z) > m ? Math.abs(d.z) : m, 0);
+    el.innerHTML = `
+      <div class="stat"><div class="num">${data.length}</div><div class="lbl">Claims analyzed</div></div>
+      <div class="stat"><div class="num flagged">${flagged.length}</div><div class="lbl">Flagged anomalies</div></div>
+      <div class="stat"><div class="num">${rate}%</div><div class="lbl">Flag rate</div></div>
+      <div class="stat"><div class="num">${maxZ.toFixed(1)}\u03C3</div><div class="lbl">Largest deviation</div></div>
+    `;
+  }
+
+  // ---------- wiring ----------
+  const providerSelect = document.getElementById("providerSelect");
+  const zSlider = document.getElementById("zSlider");
+  const zVal = document.getElementById("zVal");
+  const runBtn = document.getElementById("runBtn");
+  const svg = document.getElementById("chart");
+  const summaryEl = document.getElementById("summary");
+  const tableWrap = document.getElementById("tableWrap");
+
+  providers.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name;
+    providerSelect.appendChild(opt);
+  });
+
+  function run() {
+    const provider = providers.find(p => p.id === providerSelect.value);
+    const z = parseFloat(zSlider.value);
+    const series = generateSeries(provider);
+    const analyzed = detectAnomalies(series, z, 8);
+    renderChart(svg, analyzed);
+    renderTable(tableWrap, analyzed, provider);
+    renderSummary(summaryEl, analyzed, z);
+  }
+
+  zSlider.addEventListener("input", () => {
+    zVal.textContent = parseFloat(zSlider.value).toFixed(1);
+  });
+  zSlider.addEventListener("change", run);
+  providerSelect.addEventListener("change", run);
+  runBtn.addEventListener("click", run);
+
+  run(); // initial render
+})();
+</script>
+</body>
+</html>
